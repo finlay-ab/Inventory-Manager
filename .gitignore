@@ -1,0 +1,63 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.pyo
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+env/
+venv/
+.venv/
+build/
+develop-eggs/
+dist/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Flask and Python Environment
+instance/
+*.db
+*.sqlite3
+
+# Flask Alembic migrations
+migrations/versions/__pycache__/
+migrations/env.pyc
+migrations/*.pyc
+migrations/versions/*.pyc
+
+# Flask-Specific Ignored Files
+*.log
+*.pot
+*.pyc
+*.pyo
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+*~
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# Local files
+.DS_Store
+.env
+.env.*
