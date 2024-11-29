@@ -1,5 +1,40 @@
 {% extends "shared/base.html" %}
 {% block content %}
 
-{{home.description}}
+<div class="container mt-4">
+    <h2 class="mb-4">{{ home.description }}</h2>
+
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        <div class="col">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Browse All Inventories</h5>
+                    <p class="card-text">Explore all available inventories created by users.</p>
+                    <a href="/inventories/all" class="btn btn-primary">Browse</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Browse Followed Inventories</h5>
+                    <p class="card-text">View inventories you are following.</p>
+                    <a href="/inventories/followed" class="btn btn-primary">Browse</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">My Inventory</h5>
+                    <p class="card-text">Manage your own inventory and items.</p>
+                    <a href="/inventories/mine" class="btn btn-primary">Manage</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
