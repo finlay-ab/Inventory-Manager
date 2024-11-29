@@ -1,14 +1,45 @@
-<!--navbar designed with help from https://getbootstrap.com/docs/4.2/components/navbar/ -->
+<!-- Navbar designed with help from https://getbootstrap.com/docs/4.2/components/navbar/ 
+     https://getbootstrap.com/docs/5.0/components/dropdowns/-->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <a class="navbar-brand" href="/">Inventory Manager</a>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarText" aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarText">
-      <ul class="navbar-nav mr-auto">
-        <li class="nav-item">
-          <a class="nav-link" href="/all-assessments">All Items</a>
-        </li>
-      </ul>
+  <a class="navbar-brand" href="/">Inventory Manager</a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse" id="navbarNav">
+    <ul class="navbar-nav mr-auto">
+
+      <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="browseDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          Browse
+        </a>
+        <div class="dropdown-menu" aria-labelledby="browseDropdown">
+          <a class="dropdown-item" href="/browse">All Inventories</a>
+          <a class="dropdown-item" href="/followed-inventories">Followed Inventories</a>
+          <a class="dropdown-item" href="/categories">My inventory</a>
+        </div>
+      </li>
+
+      <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="loansDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          Loans
+        </a>
+        <div class="dropdown-menu" aria-labelledby="loansDropdown">
+          <a class="dropdown-item" href="/my-loans">My Loan Requests</a>
+          <a class="dropdown-item" href="/borrowed-items">Items Borrowed</a>
+          <a class="dropdown-item" href="/loan-history">Loan Control Panel</a>
+        </div>
+      </li>
+    </ul>
+
+    <!-- Authentication Button -->
+    <div class="ml-auto">
+      {% if user_logged_in %}
+        <!-- Sign Out -->
+        <a class="btn btn-outline-light" href="/logout">Sign Out</a>
+      {% else %}
+        <!-- Sign In -->
+        <a class="btn btn-outline-light" href="/login">Sign In</a>
+      {% endif %}
     </div>
-  </nav>
+  </div>
+</nav>

@@ -13,4 +13,5 @@ def home():
                           '''
     }
 
-    return render_template('home.html', title='Home', home=home)
+    user_logged_in = False
+    return render_template("home.html", title='Home', user_logged_in=user_logged_in, home=home)
