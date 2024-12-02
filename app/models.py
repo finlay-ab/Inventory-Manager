@@ -14,6 +14,10 @@ class User(db.Model):
    
     def get_id(self):
         return str(self.id)
+    
+    @property
+    def is_active(self):
+        return True
 
 
 # Inventories Table
