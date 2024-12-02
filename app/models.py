@@ -1,5 +1,6 @@
 from app import db
 from datetime import datetime
+from flask_login import UserMixin
 
 # Users Table
 class User(db.Model):
@@ -10,6 +11,10 @@ class User(db.Model):
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+   
+    def get_id(self):
+        return str(self.id)
+
 
 # Inventories Table
 class Inventory(db.Model):
