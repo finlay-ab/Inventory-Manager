@@ -3,7 +3,7 @@ from datetime import datetime
 from flask_login import UserMixin
 
 # Users Table
-class User(db.Model):
+class User(db.Model, UserMixin):
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -12,12 +12,7 @@ class User(db.Model):
     password = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
    
-    def get_id(self):
-        return str(self.id)
-    
-    @property
-    def is_active(self):
-        return True
+
 
 
 # Inventories Table
