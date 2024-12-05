@@ -160,7 +160,7 @@ def manage_inventory():
         flash("Inventory updated successfully!", "success")
         return redirect(url_for('my_inventory'))
 
-    return render_template("item/edit-item.html", form=form, inventory=inventory)
+    return render_template("inventory/manage-inventory.html", form=form, inventory=inventory)
 
 
 @app.route('/login', methods=['GET', 'POST'])
