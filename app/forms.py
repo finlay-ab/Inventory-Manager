@@ -44,3 +44,10 @@ class CreateItemForm(FlaskForm):
         validators=[DataRequired()]
     )
     submit = SubmitField('Create Item')
+
+    
+class DeleteItemButtonForm(FlaskForm):
+    submit = SubmitField('Delete')
+
+class EditItemButtonForm(FlaskForm):
+    submit = SubmitField('Edit')

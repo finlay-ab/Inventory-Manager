@@ -26,8 +26,14 @@
                     </div>
                     <p class="card-text mb-2">{{ card.description }}</p>
                     <div class="mt-auto d-flex justify-content-end">
-                        <a href="#" class="btn btn-success btn-sm mr-2">Edit</a>
-                        <a href="#" class="btn btn-danger btn-sm">Delete</a>
+                        <form method="GET" action="{{ card.edit_link }}">
+                            {{ card.edit_form.hidden_tag() }}
+                            {{ card.edit_form.submit(class="btn btn-primary btn-sm") }}
+                        </form>
+                        <form method="POST" action="{{ card.delete_link }}">
+                            {{ card.delete_form.hidden_tag() }}
+                            {{ card.delete_form.submit(class="btn btn-primary btn-sm") }}
+                        </form>                    
                     </div>
                 </div>
                 

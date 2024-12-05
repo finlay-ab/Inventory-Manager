@@ -2,9 +2,8 @@ from flask import render_template, redirect, flash, url_for
 from flask_login import login_user, login_required, logout_user, current_user
 from app import app, db
 from app.models import User, Inventory, Item
-from app.forms import LoginForm, SignupForm, CreateInventoryForm, CreateItemForm
+from app.forms import LoginForm, SignupForm, CreateInventoryForm, CreateItemForm, DeleteItemButtonForm, EditItemButtonForm
 from werkzeug.security import generate_password_hash, check_password_hash
-
 
 
 # index page for website
@@ -46,6 +45,8 @@ def my_inventory():
         items = Item.query.filter_by(inventory_id=inventory.id).all()
         cards = []
         for item in items:
+            edit_form = EditItemButtonForm()
+            delete_form = DeleteItemButtonForm()
             card = {
                 "name": item.name,
                 "description": item.description,
@@ -53,8 +54,10 @@ def my_inventory():
                 "repair_status_class": repair_status_badge.get(item.condition),
                 "loan_status": item.loan_status.title().replace("_", " "),  
                 "loan_status_class": loan_status_badge.get(item.loan_status), 
-                "edit_link": f"{item.id}",  
-                "delete_link": f"{item.id}", 
+                "edit_form": edit_form,
+                "edit_link":  url_for('edit_item', item_id=item.id), 
+                "delete_form": delete_form, 
+                "delete_link": url_for('delete_item', item_id=item.id), 
             }
             cards.append(card)
 
@@ -98,6 +101,46 @@ def create_item():
         return redirect(url_for('my_inventory'))
     return render_template('item/create-item.html', form=form, inventory_id=inventory.id)
 
+@app.route('/edit/<int:item_id>',  methods=['GET', 'POST'])
+@login_required
+def edit_item(item_id):
+    item = Item.query.get_or_404(item_id)
+    inventory = Inventory.query.filter_by(id=item.inventory_id).first()
+    user = User.query.filter_by(id=item.inventory_id).first()
+
+    if inventory.owner_id != current_user.id:
+        flash("Error")
+        return redirect(url_for('my_inventory'))
+    
+    form = CreateItemForm(obj=item)
+    if form.validate_on_submit():
+        item.name=form.name.data
+        item.description=form.description.data
+        item.loan_status=form.loan_status.data
+        item.condition=form.condition.data
+        
+        db.session.commit()
+        flash('Item edited successfully!', 'success')
+        return redirect(url_for('my_inventory'))
+    return render_template('item/edit-item.html', form=form, item=item)
+
+    
+@app.route('/delete/<int:item_id>', methods=['POST'])
+@login_required
+def delete_item(item_id):
+    item = Item.query.get_or_404(item_id)
+    inventory = Inventory.query.filter_by(id=item.inventory_id).first()
+    user = User.query.filter_by(id=item.inventory_id).first()
+
+    if inventory.owner_id != current_user.id:
+        flash("Error")
+        return redirect(url_for('my_inventory'))
+
+    db.session.delete(item)
+    db.session.commit()
+    flash('Item deleted', 'success')
+    return redirect(url_for('my_inventory'))
+
 
 @app.route('/manage-inventory', methods=['GET', 'POST'])
 @login_required
@@ -117,7 +160,7 @@ def manage_inventory():
         flash("Inventory updated successfully!", "success")
         return redirect(url_for('my_inventory'))
 
-    return render_template("inventory/manage-inventory.html", form=form, inventory=inventory)
+    return render_template("item/edit-item.html", form=form, inventory=inventory)
 
 
 @app.route('/login', methods=['GET', 'POST'])
