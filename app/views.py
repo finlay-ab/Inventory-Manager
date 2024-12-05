@@ -2,7 +2,7 @@ from flask import render_template, redirect, flash, url_for
 from flask_login import login_user, login_required, logout_user, current_user
 from app import app, db
 from app.models import User, Inventory, Item
-from app.forms import LoginForm, SignupForm, CreateInventoryForm
+from app.forms import LoginForm, SignupForm, CreateInventoryForm, CreateItemForm
 from werkzeug.security import generate_password_hash, check_password_hash
 
 
@@ -47,10 +47,10 @@ def my_inventory():
         cards = []
         for item in items:
             card = {
-                "title": item.title,
+                "name": item.name,
                 "description": item.description,
-                "repair_status": item.repair_status.title(),
-                "repair_status_class": repair_status_badge.get(item.repair_status),
+                "repair_status": item.condition.title(),
+                "repair_status_class": repair_status_badge.get(item.condition),
                 "loan_status": item.loan_status.title(),  
                 "loan_status_class": loan_status_badge.get(item.loan_status),
                 "details_link": f"{item.id}",  
@@ -74,6 +74,30 @@ def create_inventory():
         db.session.commit()
         return redirect(url_for('my_inventory'))
     return render_template('inventory/create-inventory.html', form=form)
+
+
+@app.route('/create-item', methods=['GET', 'POST'])
+def create_item():
+    inventory = Inventory.query.filter_by(owner_id=current_user.id).first()
+
+    if not inventory:
+        flash("Inventory not found.", "danger")
+        return redirect(url_for('my_inventory'))
+
+    form = CreateItemForm()
+    if form.validate_on_submit():
+        new_item = Item(
+            inventory_id=inventory.id,
+            name=form.name.data,
+            description=form.description.data,
+            loan_status=form.loan_status.data,
+            condition=form.condition.data
+        )
+        db.session.add(new_item)
+        db.session.commit()
+        flash('Item created successfully!', 'success')
+        return redirect(url_for('my_inventory'))
+    return render_template('item/create-item.html', form=form, inventory_id=inventory.id)
 
 
 @app.route('/manage-inventory', methods=['GET', 'POST'])

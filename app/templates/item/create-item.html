@@ -1,0 +1,26 @@
+{% extends "shared/base.html" %}
+{% block content %}
+<div class="container">
+    <h1>Create Item</h1>
+    <form method="POST" action="{{ url_for('create_item') }}">
+        {{ form.hidden_tag() }}
+        <div class="form-group">
+            <label for="name">Name:</label>
+            {{ form.name }}
+        </div>
+        <div class="form-group">
+            <label for="description">Description:</label>
+            {{ form.description }}
+        </div>
+        <div class="form-group">
+            <label for="loan_status">Loan Status:</label>
+            {{ form.loan_status }}
+        </div>
+        <div class="form-group">
+            <label for="condition">Condition:</label>
+            {{ form.condition }}
+        </div>
+        {{ form.submit }}
+    </form>
+</div>
+{% endblock %}
