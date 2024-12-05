@@ -33,8 +33,30 @@ class Item(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     inventory_id = db.Column(db.Integer, db.ForeignKey('inventories.id', ondelete='CASCADE'), nullable=False)
     name = db.Column(db.String(100), nullable=False)
-    quantity = db.Column(db.Integer, default=1)
     description = db.Column(db.Text, nullable=True)
+    loan_status = db.Column(
+        db.Enum(
+            'available',
+            'on_loan',
+            'unavailable',
+            name='loan_status_enum',
+        ),
+        nullable=False,
+        default='unavailable'
+    )
+    condition = db.Column(
+        db.Enum(
+            'functional',
+            'minor_repair',
+            'under_repair',
+            'out_of_service',
+            'missing_parts',
+            'inspection_needed',
+            name='condition_enum',
+        ),
+        nullable=False,
+        default='functional'
+    )
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
