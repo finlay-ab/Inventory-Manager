@@ -52,8 +52,7 @@ def my_inventory():
                 "repair_status": item.condition.title().replace("_", " "),
                 "repair_status_class": repair_status_badge.get(item.condition),
                 "loan_status": item.loan_status.title().replace("_", " "),  
-                "loan_status_class": loan_status_badge.get(item.loan_status),
-                "details_link": f"{item.id}",  
+                "loan_status_class": loan_status_badge.get(item.loan_status), 
                 "edit_link": f"{item.id}",  
                 "delete_link": f"{item.id}", 
             }
