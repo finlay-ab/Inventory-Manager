@@ -29,16 +29,16 @@ def my_inventory():
 
     repair_status_badge = {
         "functional": "success",
-        "needs repair": "warning",
-        "under repair": "info",
-        "out of service": "danger",
-        "missing parts": "secondary",
-        "inspection needed": "primary",
+        "minor_repair": "warning",
+        "under_repair": "info",
+        "out_of_service": "danger",
+        "missing_parts": "secondary",
+        "inspection_needed": "primary",
     }
 
     loan_status_badge = {
         "available": "success",
-        "on loan": "warning",
+        "on_loan": "warning",
         "unavailable": "secondary",
     }
 
@@ -49,9 +49,9 @@ def my_inventory():
             card = {
                 "name": item.name,
                 "description": item.description,
-                "repair_status": item.condition.title(),
+                "repair_status": item.condition.title().replace("_", " "),
                 "repair_status_class": repair_status_badge.get(item.condition),
-                "loan_status": item.loan_status.title(),  
+                "loan_status": item.loan_status.title().replace("_", " "),  
                 "loan_status_class": loan_status_badge.get(item.loan_status),
                 "details_link": f"{item.id}",  
                 "edit_link": f"{item.id}",  
