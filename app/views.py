@@ -26,7 +26,6 @@ def home():
 @login_required
 def my_inventory():
     inventory = Inventory.query.filter_by(owner_id=current_user.id).first()
-    items = Item.query.filter_by(inventory_id=inventory.id).all()
 
     repair_status_badge = {
         "functional": "success",
@@ -44,6 +43,7 @@ def my_inventory():
     }
 
     if inventory:
+        items = Item.query.filter_by(inventory_id=inventory.id).all()
         cards = []
         for item in items:
             card = {
