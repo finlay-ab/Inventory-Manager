@@ -3,15 +3,8 @@ from flask_login import login_user, login_required, logout_user, current_user
 from app import app, db
 from datetime import datetime
 from app.models import User, Inventory, Item, Loan
-from app.forms import LoginForm, SignupForm, CreateInventoryForm, CreateItemForm, DeleteItemButtonForm, EditItemButtonForm, LoanButtonForm, CancelLoanButtonForm
+from app.forms import LoginForm, SignupForm, CreateInventoryForm, CreateItemForm, DeleteItemButtonForm, LoanButtonForm, RejectButtonForm, ApproveButtonForm, EditItemButtonForm, ClearLoanButtonForm, CancelLoanButtonForm, ReturnLoanButtonForm
 from werkzeug.security import generate_password_hash, check_password_hash
-
-loan_status_badge = {
-    "pending": "warning",
-    "approved": "success",
-    "rejected": "danger",
-    "returned": "info",
-}
 
 # index page for website
 @app.route('/', methods=['GET', 'POST'])
@@ -20,8 +13,8 @@ def home():
         {"title": "Browse All Inventories", "description": "Explore all available inventories created by users.", "link": "/all-inventories"},
         {"title": "Browse Followed Inventories", "description": "View inventories you are following.", "link": "#"},
         {"title": "My Inventory", "description": "Manage your own inventory and items.", "link": "/my-inventory"},
-        {"title": "Manage My Loans", "description": "View your loans and the state of your requests.", "link": "#"},
-        {"title": "TBD", "description": "not sure", "link": "#"},
+        {"title": "Requested Loans", "description": "View your loan requests.", "link": "/view-loans"},
+        {"title": "TBD", "description": "not sure", "link": "/manage-loans"},
         {"title": "Account Settings", "description": "Manage your settings.", "link": "#"}
     ]
 
@@ -240,10 +233,12 @@ def loan_request(item_id):
         flash('item not avaliable for loan.', 'error')
         return redirect(url_for('view_inventory', inventory_id=item.inventory_id)) 
     
+    user_id = Inventory.query.filter_by(id=item.inventory_id).first().owner_id
+    
     loan = Loan(
         item_id=item_id,
         borrower_id=current_user.id,
-        owner_id=item.inventory_id,
+        owner_id=user_id,
         status='pending',
         request_date=datetime.utcnow()
     )
@@ -255,10 +250,10 @@ def loan_request(item_id):
     return redirect(url_for('view_inventory', inventory_id=item.inventory_id))
 
 
-@app.route('/view-loans', methods=['GET', 'POST'])
+@app.route('/manage-loans', methods=['GET', 'POST'])
 @login_required
-def view_loans():
-
+def manage_loans():
+    
     loan_status_badge = {
         "pending": "warning",
         "approved": "success",
@@ -267,12 +262,17 @@ def view_loans():
     }
 
 
-    loans = Loan.query.filter_by(borrower_id=current_user.id, status='pending').all()
+    loans = Loan.query.filter_by(owner_id=current_user.id).all()
+
+    if len(loans) == 0:
+        flash("you have no loan requests right right now!")
+    
     
     cards = []
+    reject_form = RejectButtonForm()
+    approve_form = ApproveButtonForm()
 
     for loan in loans:
-        cancel_form = CancelLoanButtonForm()
         item = Item.query.get(loan.item_id)
 
         if item:
@@ -283,8 +283,67 @@ def view_loans():
                 "inventory_name": inventory.title,
                 "request_status": item.loan_status,
                 "request_date": loan.request_date,
-                "loan_form": cancel_form,
-                "cancel_link": url_for('cancel_loan_request', loan_id=loan.id),
+                "approve_form": approve_form,
+                "approve_link": url_for('approve_loan', loan_id=loan.id),
+                "reject_form": reject_form,
+                "reject_link": url_for('reject_loan', loan_id=loan.id),
+                "loan_status_class": loan_status_badge.get(loan.status),
+                "loan_status" : loan.status
+            }
+
+            cards.append(card)
+    
+    return render_template('loans/manage-loans.html', cards=cards)
+
+
+
+@app.route('/view-loans', methods=['GET', 'POST'])
+@login_required
+def view_loan_requests():
+
+    loan_status_badge = {
+        "pending": "warning",
+        "approved": "success",
+        "rejected": "danger",
+        "returned": "info",
+    }
+
+
+    loans = Loan.query.filter_by(borrower_id=current_user.id).all()
+
+    if len(loans) == 0:
+        flash("you have no loans right now!")
+    
+    
+    cards = []
+
+    for loan in loans:
+        link = None
+        loan_form = None
+        if (loan.status == 'pending'):
+            link = url_for('cancel_loan_request', loan_id=loan.id)
+            loan_form = CancelLoanButtonForm()
+        elif (loan.status == 'approved'):
+            link = url_for('return_loan_request', loan_id=loan.id)
+            loan_form = ReturnLoanButtonForm()
+        else:
+            link = url_for('clear_loan_request', loan_id=loan.id)
+            loan_form = ClearLoanButtonForm()
+
+        item = Item.query.get(loan.item_id)
+
+        if item:
+            inventory = Inventory.query.get(item.inventory_id)
+            card = {
+                "item_name": item.name,
+                "item_description": item.description,
+                "inventory_name": inventory.title,
+                "request_status": item.loan_status,
+                "request_date": loan.request_date,
+                "loan_form": loan_form,
+                "link": link,
+                "loan_status_class": loan_status_badge.get(loan.status),
+                "loan_status" : loan.status
             }
 
             cards.append(card)
@@ -296,14 +355,78 @@ def view_loans():
 def cancel_loan_request(loan_id):
     loan = Loan.query.get_or_404(loan_id)
     
-    if loan.borrower_id != current_user.id:
+    if loan.borrower_id != current_user.id and loan.owner_id != current_user.id:
         flash("Error")
-        return redirect(url_for('view_loans'))
+        return redirect(url_for('view_loan_requests'))
 
     db.session.delete(loan)
     db.session.commit()
     flash('Loan deleted', 'success')
-    return redirect(url_for('view_loans'))
+    return redirect(url_for('view_loan_requests'))
+
+@app.route('/clear-loan-request/<int:loan_id>', methods=['POST'])
+@login_required
+def clear_loan_request(loan_id):
+    loan = Loan.query.get_or_404(loan_id)
+    
+    if loan.borrower_id != current_user.id and loan.owner_id != current_user.id:
+        flash("Error")
+        return redirect(url_for('view_loan_requests'))
+
+    db.session.delete(loan)
+    db.session.commit()
+    flash('Loan Cleared', 'success')
+    return redirect(url_for('view_loan_requests'))
+
+@app.route('/return-loan-request/<int:loan_id>', methods=['POST'])
+@login_required
+def return_loan_request(loan_id):
+    loan = Loan.query.get_or_404(loan_id)
+    item = Item.query.get_or_404(loan.item_id)
+    
+    if loan.borrower_id != current_user.id and loan.owner_id != current_user.id:
+        flash("Error")
+        return redirect(url_for('view_loan_requests'))
+    
+    item.loan_status = 'available'
+
+    db.session.delete(loan)
+    db.session.commit()
+    flash('Loan Return', 'success')
+    return redirect(url_for('view_loan_requests'))
+
+@app.route('/approve-loan-request/<int:loan_id>', methods=['POST'])
+@login_required
+def approve_loan(loan_id):
+    loan = Loan.query.get_or_404(loan_id)
+    item = Item.query.get_or_404(loan.item_id)
+    
+    if  loan.owner_id != current_user.id:
+        flash("Error")
+        return redirect(url_for('manage_loans'))
+    
+    item.loan_status = 'on_loan'
+    loan.status = 'approved'
+
+    db.session.commit()
+
+    flash('Loan approved', 'success')
+    return redirect(url_for('manage_loans'))
+
+@app.route('/reject-loan-request/<int:loan_id>', methods=['POST'])
+@login_required
+def reject_loan(loan_id):
+    loan = Loan.query.get_or_404(loan_id)
+    
+    if  loan.owner_id != current_user.id:
+        flash("Error")
+        return redirect(url_for('manage_loans'))
+
+    loan.status = 'rejected'
+
+    db.session.commit()
+    flash('Loan rejected', 'success')
+    return redirect(url_for('manage_loans'))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():

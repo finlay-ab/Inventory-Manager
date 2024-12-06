@@ -57,3 +57,15 @@ class LoanButtonForm(FlaskForm):
 
 class CancelLoanButtonForm(FlaskForm):
     submit = SubmitField("Cancel")
+
+class ReturnLoanButtonForm(FlaskForm):
+    submit = SubmitField("Return")
+
+class ClearLoanButtonForm(FlaskForm):
+    submit = SubmitField("Clear")
+
+class RejectButtonForm(FlaskForm):
+    submit = SubmitField("Reject")
+
+class ApproveButtonForm(FlaskForm):
+    submit = SubmitField('Approve')

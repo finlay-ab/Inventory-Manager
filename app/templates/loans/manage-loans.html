@@ -14,9 +14,13 @@
                         <p class="card-text mb-2">{{ card.item_description }}</p>
                         <p class="card-text mb-2">{{ card.inventory_name }}</p>
                         <div class="mt-auto">
-                            <form method="POST" action="{{ card.link }}">
-                                {{ card.loan_form.hidden_tag() }}
-                                {{ card.loan_form.submit(class="btn btn-secondary w-100") }}
+                            <form method="POST" action="{{ card.approve_link }}">
+                                {{ card.approve_form.hidden_tag() }}
+                                {{ card.approve_form.submit(class="btn btn-success w-100") }}
+                            </form>   
+                            <form method="POST" action="{{ card.reject_link }}">
+                                {{ card.reject_form.hidden_tag() }}
+                                {{ card.reject_form.submit(class="btn btn-danger w-100") }}
                             </form>       
                         </div>
                     </div>
