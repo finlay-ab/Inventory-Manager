@@ -54,3 +54,6 @@ class EditItemButtonForm(FlaskForm):
 
 class LoanButtonForm(FlaskForm):
     submit = SubmitField("Loan")
+
+class CancelLoanButtonForm(FlaskForm):
+    submit = SubmitField("Cancel")

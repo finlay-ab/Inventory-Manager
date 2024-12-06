@@ -3,9 +3,15 @@ from flask_login import login_user, login_required, logout_user, current_user
 from app import app, db
 from datetime import datetime
 from app.models import User, Inventory, Item, Loan
-from app.forms import LoginForm, SignupForm, CreateInventoryForm, CreateItemForm, DeleteItemButtonForm, EditItemButtonForm, LoanButtonForm
+from app.forms import LoginForm, SignupForm, CreateInventoryForm, CreateItemForm, DeleteItemButtonForm, EditItemButtonForm, LoanButtonForm, CancelLoanButtonForm
 from werkzeug.security import generate_password_hash, check_password_hash
 
+loan_status_badge = {
+    "pending": "warning",
+    "approved": "success",
+    "rejected": "danger",
+    "returned": "info",
+}
 
 # index page for website
 @app.route('/', methods=['GET', 'POST'])
@@ -224,14 +230,15 @@ def view_inventory(inventory_id):
 @app.route('/loan-request/<int:item_id>', methods=['GET', 'POST'])
 @login_required
 def loan_request(item_id):
+
     item = Item.query.get_or_404(item_id)
     if not item:
         flash('item not found.', 'error')
         return redirect(url_for('all_inventories')) 
     
-    #if item.loan_status != 'Available':
-        #flash('item not avaliable for loan.', 'error')
-        #return redirect(url_for('view-inventory', inventory_id=item.inventory_id)) 
+    if item.loan_status != 'available':
+        flash('item not avaliable for loan.', 'error')
+        return redirect(url_for('view_inventory', inventory_id=item.inventory_id)) 
     
     loan = Loan(
         item_id=item_id,
@@ -248,6 +255,55 @@ def loan_request(item_id):
     return redirect(url_for('view_inventory', inventory_id=item.inventory_id))
 
 
+@app.route('/view-loans', methods=['GET', 'POST'])
+@login_required
+def view_loans():
+
+    loan_status_badge = {
+        "pending": "warning",
+        "approved": "success",
+        "rejected": "danger",
+        "returned": "info",
+    }
+
+
+    loans = Loan.query.filter_by(borrower_id=current_user.id, status='pending').all()
+    
+    cards = []
+
+    for loan in loans:
+        cancel_form = CancelLoanButtonForm()
+        item = Item.query.get(loan.item_id)
+
+        if item:
+            inventory = Inventory.query.get(item.inventory_id)
+            card = {
+                "item_name": item.name,
+                "item_description": item.description,
+                "inventory_name": inventory.title,
+                "request_status": item.loan_status,
+                "request_date": loan.request_date,
+                "loan_form": cancel_form,
+                "cancel_link": url_for('cancel_loan_request', loan_id=loan.id),
+            }
+
+            cards.append(card)
+    
+    return render_template('loans/view-loans.html', cards=cards)
+
+@app.route('/cancel-loan-request/<int:loan_id>', methods=['POST'])
+@login_required
+def cancel_loan_request(loan_id):
+    loan = Loan.query.get_or_404(loan_id)
+    
+    if loan.borrower_id != current_user.id:
+        flash("Error")
+        return redirect(url_for('view_loans'))
+
+    db.session.delete(loan)
+    db.session.commit()
+    flash('Loan deleted', 'success')
+    return redirect(url_for('view_loans'))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
