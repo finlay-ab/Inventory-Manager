@@ -1,8 +1,9 @@
 from flask import render_template, redirect, flash, url_for
 from flask_login import login_user, login_required, logout_user, current_user
 from app import app, db
-from app.models import User, Inventory, Item
-from app.forms import LoginForm, SignupForm, CreateInventoryForm, CreateItemForm, DeleteItemButtonForm, EditItemButtonForm
+from datetime import datetime
+from app.models import User, Inventory, Item, Loan
+from app.forms import LoginForm, SignupForm, CreateInventoryForm, CreateItemForm, DeleteItemButtonForm, EditItemButtonForm, LoanButtonForm
 from werkzeug.security import generate_password_hash, check_password_hash
 
 
@@ -10,7 +11,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 @app.route('/', methods=['GET', 'POST'])
 def home():
     cards = [
-        {"title": "Browse All Inventories", "description": "Explore all available inventories created by users.", "link": "#"},
+        {"title": "Browse All Inventories", "description": "Explore all available inventories created by users.", "link": "/all-inventories"},
         {"title": "Browse Followed Inventories", "description": "View inventories you are following.", "link": "#"},
         {"title": "My Inventory", "description": "Manage your own inventory and items.", "link": "/my-inventory"},
         {"title": "Manage My Loans", "description": "View your loans and the state of your requests.", "link": "#"},
@@ -161,6 +162,91 @@ def manage_inventory():
         return redirect(url_for('my_inventory'))
 
     return render_template("inventory/manage-inventory.html", form=form, inventory=inventory)
+
+
+@app.route('/all-inventories', methods=['GET', 'POST'])
+def all_inventories():
+    inventories = Inventory.query.all()
+    cards = []
+    
+    for inventory in inventories:
+        card = {
+            "title": inventory.title,
+            "description": inventory.description,
+            "link": url_for('view_inventory', inventory_id=inventory.id)
+        }
+
+        cards.append(card)
+    
+    return render_template('inventory/all-inventories.html', cards=cards)
+
+@app.route('/view-inventory/<int:inventory_id>', methods=['GET', 'POST'])
+def view_inventory(inventory_id):
+    inventory = Inventory.query.get_or_404(inventory_id)
+
+    repair_status_badge = {
+        "functional": "success",
+        "minor_repair": "warning",
+        "under_repair": "info",
+        "out_of_service": "danger",
+        "missing_parts": "secondary",
+        "inspection_needed": "primary",
+    }
+
+    loan_status_badge = {
+        "available": "success",
+        "on_loan": "warning",
+        "unavailable": "secondary",
+    }
+
+    if inventory:
+        items = Item.query.filter_by(inventory_id=inventory.id).all()
+        cards = []
+        for item in items:
+            loan_form = LoanButtonForm()
+            card = {
+                "name": item.name,
+                "description": item.description,
+                "repair_status": item.condition.title().replace("_", " "),
+                "repair_status_class": repair_status_badge.get(item.condition),
+                "loan_status": item.loan_status.title().replace("_", " "),  
+                "loan_status_class": loan_status_badge.get(item.loan_status), 
+                "loan_form": loan_form,
+                "loan_link":  url_for('loan_request', item_id=item.id), 
+            }
+            cards.append(card)                    
+
+        return render_template('inventory/view-inventory.html', cards=cards, inventory=inventory)
+    else:
+        flash("Error: could not find inventory", "warning")
+        return redirect(url_for('all_inventories'))
+    
+@app.route('/loan-request/<int:item_id>', methods=['GET', 'POST'])
+@login_required
+def loan_request(item_id):
+    item = Item.query.get_or_404(item_id)
+    if not item:
+        flash('item not found.', 'error')
+        return redirect(url_for('all_inventories')) 
+    
+    #if item.loan_status != 'Available':
+        #flash('item not avaliable for loan.', 'error')
+        #return redirect(url_for('view-inventory', inventory_id=item.inventory_id)) 
+    
+    loan = Loan(
+        item_id=item_id,
+        borrower_id=current_user.id,
+        owner_id=item.inventory_id,
+        status='pending',
+        request_date=datetime.utcnow()
+    )
+
+    db.session.add(loan)
+    db.session.commit()
+
+    flash('Loan request submitted successfully.', 'success')
+    return redirect(url_for('view_inventory', inventory_id=item.inventory_id))
+
 
 
 @app.route('/login', methods=['GET', 'POST'])

@@ -1,0 +1,25 @@
+<!--will display cards with the name and description of each inventory has button called view and button called follow-->
+
+{% extends "shared/base.html" %}
+{% block content %}
+
+<div class="container">
+    <div class="row g-4">
+        {% for card in cards %}
+        <div class="col-lg-4 col-md-6 col-12 mb-4">
+            <div class="card h-100">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title mb-1">{{ card.title }}</h5>
+                    <p class="card-text mb-2">{{ card.description }}</p>
+                    <div class="mt-auto d-flex justify-content-end">
+                        <a href="{{ card.link }}" class="btn btn-secondary w-100">View</a>   
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}

@@ -12,9 +12,6 @@ class User(db.Model, UserMixin):
     password = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
    
-
-
-
 # Inventories Table
 class Inventory(db.Model):
     __tablename__ = 'inventories'
@@ -67,11 +64,9 @@ class Loan(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     item_id = db.Column(db.Integer, db.ForeignKey('items.id', ondelete='CASCADE'), nullable=False)
     borrower_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
-    owner_id = db.Column(db.Integer, nullable=True)  # Optional for filtering purposes
-    quantity = db.Column(db.Integer, nullable=False)
+    owner_id = db.Column(db.Integer, nullable=True) 
     status = db.Column(db.Enum('pending', 'approved', 'rejected', 'returned', name='loan_status'), default='pending')
     request_date = db.Column(db.DateTime, default=datetime.utcnow)
-    return_date = db.Column(db.DateTime, nullable=True)
 
 
 class Notification(db.Model):

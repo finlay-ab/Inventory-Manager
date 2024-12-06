@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, DateField, SubmitField, SelectField, BooleanField, PasswordField, SubmitField, TextAreaField
+from wtforms import StringField, DateField, SubmitField, SelectField, BooleanField, PasswordField, SubmitField, TextAreaField, SelectMultipleField
 from wtforms.validators import DataRequired, Email, EqualTo, Length
 
 class LoginForm(FlaskForm):
@@ -51,3 +51,6 @@ class DeleteItemButtonForm(FlaskForm):
 
 class EditItemButtonForm(FlaskForm):
     submit = SubmitField('Edit')
+
+class LoanButtonForm(FlaskForm):
+    submit = SubmitField("Loan")
