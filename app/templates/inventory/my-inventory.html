@@ -28,11 +28,11 @@
                     <div class="mt-auto d-flex justify-content-end">
                         <form method="GET" action="{{ card.edit_link }}">
                             {{ card.edit_form.hidden_tag() }}
-                            {{ card.edit_form.submit(class="btn btn-primary btn-sm") }}
+                            {{ card.edit_form.submit(class="btn btn-success btn-sm") }}
                         </form>
                         <form method="POST" action="{{ card.delete_link }}">
                             {{ card.delete_form.hidden_tag() }}
-                            {{ card.delete_form.submit(class="btn btn-primary btn-sm") }}
+                            {{ card.delete_form.submit(class="btn btn-danger btn-sm") }}
                         </form>                    
                     </div>
                 </div>

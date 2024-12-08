@@ -21,10 +21,15 @@
                         </div>
                         <p class="card-text mb-2">{{ card.description }}</p>
                         <div class="mt-auto">
-                            <form method="POST" action="{{ card.loan_link }}">
-                                {{ card.loan_form.hidden_tag() }}
-                                {{ card.loan_form.submit(class="btn btn-secondary w-100") }}
-                            </form>       
+                            {% if card.can_loan == 'True' %}
+                                <form method="POST" action="{{ card.loan_link }}">
+                                    {{ card.loan_form.hidden_tag() }}
+                                    {{ card.loan_form.submit(class="btn btn-secondary w-100") }}
+                                </form>    
+                            {% else %}
+                                <button class="btn btn-danger w-100" disabled>Can't Request</button>
+                            {% endif %}
+                              
                         </div>
                     </div>
                     
