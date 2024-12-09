@@ -240,9 +240,10 @@ def all_inventories():
     # display cards
     return render_template('inventory/all-inventories.html', cards=cards, user_logged_in=current_user.is_authenticated)
 
-
+# display an inventory with the given inventory id 
 @app.route('/view-inventory/<int:inventory_id>', methods=['GET', 'POST'])
 def view_inventory(inventory_id):
+    # get inventory 
     inventory = Inventory.query.get_or_404(inventory_id)
 
     repair_status_badge = {
@@ -261,14 +262,18 @@ def view_inventory(inventory_id):
         "unavailable": "secondary",
     }
 
+    # check if user is signed in for the loan system
     if not current_user.is_authenticated:
         flash("you must be signed in to loan items")
 
+    # if there is an inventory to display then
     if inventory:
+        # get items in the inventory
         items = Item.query.filter_by(inventory_id=inventory.id).all()
         cards = []
+        # for each item in the inventory 
         for item in items:
-
+            # check if the user can request the item
             item_loan_status = item.loan_status
             can_loan = "False"
             if current_user.is_authenticated:
@@ -280,7 +285,7 @@ def view_inventory(inventory_id):
                         can_loan = "True"
 
             
-
+            # make item into a card
             loan_form = LoanButtonForm()
             card = {
                 "name": item.name,
@@ -300,22 +305,27 @@ def view_inventory(inventory_id):
         flash("Error: could not find inventory", "warning")
         return redirect(url_for('all_inventories'))
 
-
+# non visable route to request a loan on a given item
 @app.route('/loan-request/<int:item_id>', methods=['GET', 'POST'])
 @login_required
 def loan_request(item_id):
-
+    # get item or error
     item = Item.query.get_or_404(item_id)
+
+    # if item doesnt exist and error failed
     if not item:
         flash('item not found.', 'error')
         return redirect(url_for('all_inventories')) 
     
+    # if the item is not available to loan 
     if item.loan_status != 'available':
         flash('item not avaliable for loan.', 'error')
         return redirect(url_for('view_inventory', inventory_id=item.inventory_id)) 
     
+    # get inventory owner
     user_id = Inventory.query.filter_by(id=item.inventory_id).first().owner_id
     
+    # create loan
     loan = Loan(
         item_id=item_id,
         borrower_id=current_user.id,
@@ -324,13 +334,14 @@ def loan_request(item_id):
         request_date=datetime.utcnow()
     )
 
+    # add loan to db
     db.session.add(loan)
     db.session.commit()
 
     flash('Loan request submitted successfully.', 'success')
     return redirect(url_for('view_inventory', inventory_id=item.inventory_id))
 
-
+# page to for inventory managers to manage reqeuests on there items
 @app.route('/manage-loans', methods=['GET', 'POST'])
 @login_required
 def manage_loans():
@@ -342,9 +353,10 @@ def manage_loans():
         "returned": "info",
     }
 
-
+    # get loans
     loans = Loan.query.filter_by(owner_id=current_user.id).all()
 
+    # output something to help the manager if theres no loans
     if len(loans) == 0:
         flash("you have no loan requests right right now!")
     
@@ -353,10 +365,15 @@ def manage_loans():
     reject_form = RejectButtonForm()
     approve_form = ApproveButtonForm()
 
+    # for each loan in loans
     for loan in loans:
+        # get the item being reqested
         item = Item.query.get(loan.item_id)
 
+        # if the item exists 
         if item:
+            # make card
+            # get the name of the person requesting the loan
             borrower_name = User.query.get_or_404(loan.borrower_id).username
             card = {
                 "item_name": item.name,
@@ -377,7 +394,7 @@ def manage_loans():
     return render_template('loans/manage-loans.html', cards=cards, user_logged_in=current_user.is_authenticated)
 
 
-
+# route to for users to view there loans and loan request status
 @app.route('/view-loans', methods=['GET', 'POST'])
 @login_required
 def view_loan_requests():
@@ -389,15 +406,17 @@ def view_loan_requests():
         "returned": "info",
     }
 
-
+    # get users loans
     loans = Loan.query.filter_by(borrower_id=current_user.id).all()
 
+    # output something to help the user if theres no loans
     if len(loans) == 0:
         flash("you have no loans right now!")
     
     
     cards = []
 
+    # for each loan in loans make a card to display info
     for loan in loans:
         link = None
         loan_form = None
@@ -431,65 +450,89 @@ def view_loan_requests():
     
     return render_template('loans/view-loans.html', cards=cards, user_logged_in=current_user.is_authenticated)
 
-
+# non visable route to cancel a loan with the given id
 @app.route('/cancel-loan-request/<int:loan_id>', methods=['POST'])
 @login_required
 def cancel_loan_request(loan_id):
+    # get loan
     loan = Loan.query.get_or_404(loan_id)
-    
+
+    # if its not the current user or the item owner 
     if loan.borrower_id != current_user.id and loan.owner_id != current_user.id:
         flash("Error")
         return redirect(url_for('view_loan_requests'))
 
+    # delete loan
     db.session.delete(loan)
     db.session.commit()
-    flash('Loan deleted', 'success')
+    flash('Loan cancelled', 'success')
     return redirect(url_for('view_loan_requests'))
 
-
+# non visable route to clear a loan with the given id
 @app.route('/clear-loan-request/<int:loan_id>', methods=['POST'])
 @login_required
 def clear_loan_request(loan_id):
+    # get loan
     loan = Loan.query.get_or_404(loan_id)
     
+    # if its not the current user or the item owner 
     if loan.borrower_id != current_user.id and loan.owner_id != current_user.id:
         flash("Error")
         return redirect(url_for('view_loan_requests'))
 
+    # delete loan
     db.session.delete(loan)
     db.session.commit()
     flash('Loan Cleared', 'success')
     return redirect(url_for('view_loan_requests'))
 
 
+# non visable route to return a loan with the given id
 @app.route('/return-loan-request/<int:loan_id>', methods=['POST'])
 @login_required
 def return_loan_request(loan_id):
+    # get loan 
     loan = Loan.query.get_or_404(loan_id)
+
+    # get item
     item = Item.query.get_or_404(loan.item_id)
     
+    # if its not the current user or the item owner     
     if loan.borrower_id != current_user.id and loan.owner_id != current_user.id:
         flash("Error")
         return redirect(url_for('view_loan_requests'))
     
+    # set item ststus back to available to loan
     item.loan_status = 'available'
 
+    # delete loan
     db.session.delete(loan)
+
     db.session.commit()
-    flash('Loan Return', 'success')
+    flash('Loan Returned', 'success')
     return redirect(url_for('view_loan_requests'))
 
-
+# non visable route to approve a loan with the given id
 @app.route('/approve-loan-request/<int:loan_id>', methods=['POST'])
 @login_required
 def approve_loan(loan_id):
+    # get loan
     loan = Loan.query.get_or_404(loan_id)
+    # get item
     item = Item.query.get_or_404(loan.item_id)
     
+    # if its not the owner of the itme
     if  loan.owner_id != current_user.id:
-        flash("Error")
+        flash("Error you cant manage loans you dont own!")
         return redirect(url_for('manage_loans'))
+
+    # if the item is not available to loan
+    if loan.loan_status == 'on_loan' or loan.loan_status == 'unavailable':
+        flash("Error you cant loan an unavilable item!")
+        return redirect(url_for('manage_loans'))
+
     
+    # update loan status
     item.loan_status = 'on_loan'
     loan.status = 'approved'
 
@@ -498,16 +541,18 @@ def approve_loan(loan_id):
     flash('Loan approved', 'success')
     return redirect(url_for('manage_loans'))
 
-
+# non visable route to reject a loan with the given id
 @app.route('/reject-loan-request/<int:loan_id>', methods=['POST'])
 @login_required
 def reject_loan(loan_id):
     loan = Loan.query.get_or_404(loan_id)
     
+    # if its not the owner of the item
     if  loan.owner_id != current_user.id:
         flash("Error")
         return redirect(url_for('manage_loans'))
 
+    # update db
     loan.status = 'rejected'
 
     db.session.commit()

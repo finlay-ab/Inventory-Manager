@@ -2,6 +2,10 @@ from app import db
 from datetime import datetime
 from flask_login import UserMixin
 
+#added cascade with help from 
+#https://stackoverflow.com/questions/5033547/sqlalchemy-cascade-delete
+# (casecade in this case means if the user is deleted all the data assosiated with there id is removed)
+
 # Users Table
 class User(db.Model, UserMixin):
     __tablename__ = 'users'
@@ -68,7 +72,7 @@ class Loan(db.Model):
     status = db.Column(db.Enum('pending', 'approved', 'rejected', 'returned', name='loan_status'), default='pending')
     request_date = db.Column(db.DateTime, default=datetime.utcnow)
 
-
+# un used, was planned but not implimented!
 class Notification(db.Model):
     __tablename__ = 'notifications'
 
