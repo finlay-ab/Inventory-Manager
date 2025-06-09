@@ -2,6 +2,22 @@
 
 Inventory Manager is a Flask-based web application tailored to the needs of university societies, providing an efficient and user-friendly solution for inventory management. This tool is designed to streamline item tracking, borrowing, and organization, offering a centralized platform for student organizations.
 
+## How to run the code
+
+```bash
+chmod +x env_setup.sh && chmod +x reset_db.sh
+```
+
+```bash
+./env_setup.sh
+source venv/bin/activate
+./reset_db.sh
+```
+
+```bash
+flask run
+```
+
 ## Features by Iteration
 
 ### **First Iteration**
