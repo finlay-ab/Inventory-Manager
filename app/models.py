@@ -1,10 +1,15 @@
 from app import db
 from datetime import datetime
 from flask_login import UserMixin
+import secrets
 
-#added cascade with help from 
-#https://stackoverflow.com/questions/5033547/sqlalchemy-cascade-delete
-# (casecade in this case means if the user is deleted all the data assosiated with there id is removed)
+# Association table for User <-> Inventory following relationship
+inventory_followers = db.Table(
+    'inventory_followers',
+    db.Column('user_id', db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), primary_key=True),
+    db.Column('inventory_id', db.Integer, db.ForeignKey('inventories.id', ondelete='CASCADE'), primary_key=True),
+    db.Column('followed_at', db.DateTime, default=datetime.utcnow)
+)
 
 # Users Table
 class User(db.Model, UserMixin):
@@ -15,7 +20,15 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-   
+
+    followed_inventories = db.relationship(
+        'Inventory',
+        secondary=inventory_followers,
+        back_populates='followers',
+        lazy='dynamic'
+    )
+
+
 # Inventories Table
 class Inventory(db.Model):
     __tablename__ = 'inventories'
@@ -25,6 +38,31 @@ class Inventory(db.Model):
     title = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    is_private = db.Column(db.Boolean, default=False, nullable=False)
+    allowed_email_domain = db.Column(db.String(100), nullable=True)
+    access_link_token = db.Column(db.String(64), nullable=True, unique=True)
+
+    followers = db.relationship(
+        'User',
+        secondary=inventory_followers,
+        back_populates='followed_inventories',
+        lazy='dynamic'
+    )
+
+    def generate_access_link_token(self):
+        self.access_link_token = secrets.token_urlsafe(32)
+
+    def can_user_access(self, user, token=None):
+        if not self.is_private:
+            return True
+        # Email domain check
+        if self.allowed_email_domain and user.email.endswith(f"@{self.allowed_email_domain}"):
+            return True
+        # Access link token check
+        if token and token == self.access_link_token:
+            return True
+        return False
 
 
 # Items Table
@@ -68,7 +106,7 @@ class Loan(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     item_id = db.Column(db.Integer, db.ForeignKey('items.id', ondelete='CASCADE'), nullable=False)
     borrower_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
-    owner_id = db.Column(db.Integer, nullable=True) 
+    owner_id = db.Column(db.Integer, nullable=True)
     status = db.Column(db.Enum('pending', 'approved', 'rejected', 'returned', name='loan_status'), default='pending')
     request_date = db.Column(db.DateTime, default=datetime.utcnow)
 
